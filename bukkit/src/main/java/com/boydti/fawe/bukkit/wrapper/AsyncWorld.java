@@ -27,9 +27,7 @@ import org.bukkit.Difficulty;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Particle;
 import org.bukkit.Sound;
-import org.bukkit.SoundCategory;
 import org.bukkit.TreeType;
 import org.bukkit.World;
 import org.bukkit.WorldBorder;
@@ -37,21 +35,12 @@ import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Arrow;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.FallingBlock;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.LightningStrike;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.MaterialData;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.util.Consumer;
 import org.bukkit.util.Vector;
 
 /**
@@ -68,11 +57,6 @@ public class AsyncWorld extends DelegateFaweQueue implements World, HasFaweQueue
     private World parent;
     private FaweQueue queue;
     private BukkitImplAdapter adapter;
-
-    @Override
-    public <T> void spawnParticle(Particle particle, double v, double v1, double v2, int i, double v3, double v4, double v5, double v6, T t) {
-        parent.spawnParticle(particle, v, v1, v2, i, v3, v4, v5, v6, t);
-    }
 
     /**
      * @deprecated use {@link #wrap(org.bukkit.World)} instead
@@ -188,113 +172,13 @@ public class AsyncWorld extends DelegateFaweQueue implements World, HasFaweQueue
     }
 
     @Override
-    public void spawnParticle(Particle particle, Location location, int i) {
-        parent.spawnParticle(particle, location, i);
-    }
-
-    @Override
-    public void spawnParticle(Particle particle, double v, double v1, double v2, int i) {
-        parent.spawnParticle(particle, v, v1, v2, i);
-    }
-
-    @Override
-    public <T> void spawnParticle(Particle particle, Location location, int i, T t) {
-        parent.spawnParticle(particle, location, i, t);
-    }
-
-    @Override
-    public <T> void spawnParticle(Particle particle, double v, double v1, double v2, int i, T t) {
-        parent.spawnParticle(particle, v, v1, v2, i, t);
-    }
-
-    @Override
-    public void spawnParticle(Particle particle, Location location, int i, double v, double v1, double v2) {
-        parent.spawnParticle(particle, location, i, v, v1, v2);
-    }
-
-    @Override
-    public void spawnParticle(Particle particle, double v, double v1, double v2, int i, double v3, double v4, double v5) {
-        parent.spawnParticle(particle, v, v1, v2, i, v3, v4, v5);
-    }
-
-    @Override
-    public <T> void spawnParticle(Particle particle, Location location, int i, double v, double v1, double v2, T t) {
-        parent.spawnParticle(particle, location, i, v, v1, v2, t);
-    }
-
-    @Override
-    public <T> void spawnParticle(Particle particle, double v, double v1, double v2, int i, double v3, double v4, double v5, T t) {
-        parent.spawnParticle(particle, v, v1, v2, i, v3, v4, v5, t);
-    }
-
-    @Override
-    public void spawnParticle(Particle particle, Location location, int i, double v, double v1, double v2, double v3) {
-        parent.spawnParticle(particle, location, i, v, v1, v2, v3);
-    }
-
-    @Override
-    public void spawnParticle(Particle particle, double v, double v1, double v2, int i, double v3, double v4, double v5, double v6) {
-        parent.spawnParticle(particle, v, v1, v2, i, v3, v4, v5, v6);
-    }
-
-    @Override
-    public <T> void spawnParticle(Particle particle, Location location, int i, double v, double v1, double v2, double v3, T t) {
-        parent.spawnParticle(particle, location, i, v, v1, v2, v3, t);
-    }
-
-    @Override
-    public int getEntityCount() {
-        return TaskManager.IMP.sync(new RunnableVal<Integer>() {
-            @Override
-            public void run(Integer value) {
-                this.value = parent.getEntityCount();
-            }
-        });
-    }
-
-    @Override
-    public int getTileEntityCount() {
-        return TaskManager.IMP.sync(new RunnableVal<Integer>() {
-            @Override
-            public void run(Integer value) {
-                this.value = parent.getTileEntityCount();
-            }
-        });
-    }
-
-    @Override
-    public int getTickableTileEntityCount() {
-        return TaskManager.IMP.sync(new RunnableVal<Integer>() {
-            @Override
-            public void run(Integer value) {
-                this.value = parent.getTickableTileEntityCount();
-            }
-        });
-    }
-
-    @Override
-    public int getChunkCount() {
-        return TaskManager.IMP.sync(new RunnableVal<Integer>() {
-            @Override
-            public void run(Integer value) {
-                this.value = parent.getChunkCount();
-            }
-        });
-    }
-
-    @Override
-    public int getPlayerCount() {
-        return TaskManager.IMP.sync(new RunnableVal<Integer>() {
-            @Override
-            public void run(Integer value) {
-                this.value = parent.getPlayerCount();
-            }
-        });
-    }
-
-    @Override
     public Block getBlockAt(final int x, final int y, final int z) {
         return new AsyncBlock(this, queue, x, y, z);
+    }
+
+    @Override
+    public Entity getEntity(int i) {
+        return null;
     }
 
     @Override
@@ -353,21 +237,6 @@ public class AsyncWorld extends DelegateFaweQueue implements World, HasFaweQueue
     @Override
     public Chunk getChunkAt(Block block) {
         return getChunkAt(block.getX(), block.getZ());
-    }
-
-    @Override
-    public void getChunkAtAsync(int x, int z, ChunkLoadCallback cb) {
-        parent.getChunkAtAsync(x, z, cb);
-    }
-
-    @Override
-    public void getChunkAtAsync(Location location, ChunkLoadCallback cb) {
-        parent.getChunkAtAsync(location, cb);
-    }
-
-    @Override
-    public void getChunkAtAsync(Block block, ChunkLoadCallback cb) {
-        parent.getChunkAtAsync(block, cb);
     }
 
     @Override
@@ -536,11 +405,6 @@ public class AsyncWorld extends DelegateFaweQueue implements World, HasFaweQueue
     }
 
     @Override
-    public <T extends Arrow> T spawnArrow(Location location, Vector vector, float v, float v1, Class<T> aClass) {
-        return parent.spawnArrow(location, vector, v, v1, aClass);
-    }
-
-    @Override
     public boolean generateTree(final Location location, final TreeType type) {
         return TaskManager.IMP.sync(new RunnableVal<Boolean>() {
             @Override
@@ -563,6 +427,16 @@ public class AsyncWorld extends DelegateFaweQueue implements World, HasFaweQueue
     @Override
     public Entity spawnEntity(Location loc, EntityType type) {
         return spawn(loc, type.getEntityClass());
+    }
+
+    @Override
+    public LivingEntity spawnCreature(Location location, EntityType entityType) {
+        return null;
+    }
+
+    @Override
+    public LivingEntity spawnCreature(Location location, CreatureType creatureType) {
+        return null;
     }
 
     @Override
@@ -654,6 +528,11 @@ public class AsyncWorld extends DelegateFaweQueue implements World, HasFaweQueue
                 this.value = parent.getNearbyEntities(location, x, y, z);
             }
         });
+    }
+
+    @Override
+    public Collection<Player> getNearbyPlayers(Location location, double v, double v1, double v2) {
+        return List.of();
     }
 
     @Override
@@ -812,26 +691,6 @@ public class AsyncWorld extends DelegateFaweQueue implements World, HasFaweQueue
             @Override
             public void run(T value) {
                 this.value = parent.spawn(location, clazz);
-            }
-        });
-    }
-
-    @Override
-    public <T extends Entity> T spawn(Location location, Class<T> clazz, Consumer<T> function) throws IllegalArgumentException {
-        return TaskManager.IMP.sync(new RunnableVal<T>() {
-            @Override
-            public void run(T value) {
-                this.value = parent.spawn(location, clazz, function);
-            }
-        });
-    }
-
-    @Override
-    public FallingBlock spawnFallingBlock(Location location, MaterialData data) throws IllegalArgumentException {
-        return TaskManager.IMP.sync(new RunnableVal<FallingBlock>() {
-            @Override
-            public void run(FallingBlock value) {
-                this.value = parent.spawnFallingBlock(location, data);
             }
         });
     }
@@ -1055,36 +914,6 @@ public class AsyncWorld extends DelegateFaweQueue implements World, HasFaweQueue
             @Override
             public void run(Object value) {
                 parent.playSound(location, sound, volume, pitch);
-            }
-        });
-    }
-
-    @Override
-    public void playSound(final Location location, final String sound, final float volume, final float pitch) {
-        TaskManager.IMP.sync(new RunnableVal<Object>() {
-            @Override
-            public void run(Object value) {
-                parent.playSound(location, sound, volume, pitch);
-            }
-        });
-    }
-
-    @Override
-    public void playSound(Location location, Sound sound, SoundCategory category, float volume, float pitch) {
-        TaskManager.IMP.sync(new RunnableVal<Object>() {
-            @Override
-            public void run(Object value) {
-                parent.playSound(location, sound, category, volume, pitch);
-            }
-        });
-    }
-
-    @Override
-    public void playSound(Location location, String sound, SoundCategory category, float volume, float pitch) {
-        TaskManager.IMP.sync(new RunnableVal<Object>() {
-            @Override
-            public void run(Object value) {
-                parent.playSound(location, sound, category, volume, pitch);
             }
         });
     }

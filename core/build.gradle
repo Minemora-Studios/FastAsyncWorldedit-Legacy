@@ -1,66 +1,79 @@
-repositories {
-    flatDir {dirs 'lib'}
+plugins {
+    id "java"
 }
+
+repositories {
+    flatDir { dirs 'lib' }
+    mavenCentral()
+}
+
 dependencies {
-    testCompile 'junit:junit:4.12'
-    compile 'org.yaml:snakeyaml:1.16'
-    compile 'com.google.code.gson:gson:2.2.4'
-    compile 'net.fabiozumbi12:redprotect:1.9.6'
-    compile 'com.plotsquared:plotsquared-api:3.1'
-    compile 'org.primesoft:BlocksHub:2.0'
-    compile 'com.github.luben:zstd-jni:1.1.1'
-//    compile 'org.javassist:javassist:3.22.0-CR1'
-    compile 'co.aikar:fastutil-lite:1.0'
-    compile(group: 'com.sk89q.worldedit', name: 'worldedit-core', version:'6.1.3-SNAPSHOT') {
+    testImplementation 'junit:junit:4.13.2'
+
+    implementation 'org.yaml:snakeyaml:1.16'
+    implementation 'com.google.code.gson:gson:2.2.4'
+    //implementation 'net.fabiozumbi12:redprotect:1.9.6'
+    implementation 'com.plotsquared:plotsquared-api:3.1'
+    implementation 'org.primesoft:BlocksHub:2.0'
+    implementation 'com.github.luben:zstd-jni:1.1.1'
+    implementation 'co.aikar:fastutil-lite:1.0'
+
+    implementation(group: 'com.sk89q.worldedit', name: 'worldedit-core', version: '6.1.3-SNAPSHOT') {
         exclude(module: 'bukkit-classloader-check')
     }
+
+    implementation("org.graalvm.polyglot:polyglot:23.1.2")
+    implementation("org.graalvm.polyglot:js-community:23.1.2@pom")
+
 }
 
-processResources {
-    from('src/main/resources') {
-        include 'fawe.properties'
-        expand(
-                version: "${project.parent.version}",
-                name: project.parent.name,
-        )
+tasks.named('jar') {
+    archiveFileName = "fawe-api-${rootProject.version}.jar"
+    destinationDirectory = file("${rootProject.projectDir}/mvn/com/boydti/fawe-api/${rootProject.version}")
+}
+
+tasks.register('createPom') {
+    doLast {
+        def dirVer = file("${rootProject.projectDir}/mvn/com/boydti/fawe-api/${rootProject.version}")
+        dirVer.mkdirs()
+        def pomVer = """\
+            <project>
+              <modelVersion>4.0.0</modelVersion>
+              <groupId>com.boydti</groupId>
+              <artifactId>fawe-api</artifactId>
+              <version>${rootProject.version}</version>
+              <dependencies/>
+            </project>
+        """.stripIndent()
+        file("${dirVer}/fawe-api-${rootProject.version}.pom").text = pomVer
+
+        def dirLatest = file("${rootProject.projectDir}/mvn/com/boydti/fawe-api/latest")
+        dirLatest.mkdirs()
+        def pomLatest = """\
+            <project>
+              <modelVersion>4.0.0</modelVersion>
+              <groupId>com.boydti</groupId>
+              <artifactId>fawe-api</artifactId>
+              <version>latest</version>
+              <dependencies/>
+            </project>
+        """.stripIndent()
+        file("${dirLatest}/fawe-api-latest.pom").text = pomLatest
     }
 }
 
-jar.archiveName="fawe-api-${project.parent.version}.jar"
-jar.destinationDir = file '../mvn/com/boydti/fawe-api/' + project.parent.version
-task createPom << {
-    pom {
-        project {
-            groupId 'com.boydti'
-            artifactId 'fawe-api'
-            version project.parent.version
-        }
-    }
-    .getEffectivePom()
-    .setDependencies(new ArrayList<>())
-    .writeTo("../mvn/com/boydti/fawe-api/${project.parent.version}/fawe-api-${project.parent.version}.pom")
-    pom {
-        project {
-            groupId 'com.boydti'
-            artifactId 'fawe-api'
-            version 'latest'
-        }
-    }
-    .getEffectivePom()
-    .setDependencies(new ArrayList<>())
-    .writeTo("../mvn/com/boydti/fawe-api/latest/fawe-api-latest.pom")
-}
-
-task copyFiles {
+tasks.register('copyFiles') {
+    dependsOn tasks.named('jar'), tasks.named('createPom')
     doLast {
         copy {
-            from "../mvn/com/boydti/fawe-api/${project.parent.version}/"
-            into '../mvn/com/boydti/fawe-api/latest/'
+            from "${rootProject.projectDir}/mvn/com/boydti/fawe-api/${rootProject.version}/"
+            into "${rootProject.projectDir}/mvn/com/boydti/fawe-api/latest/"
             include('*.jar')
-            rename ("fawe-api-${project.parent.version}.jar", 'fawe-api-latest.jar')
+            rename("fawe-api-${rootProject.version}.jar", 'fawe-api-latest.jar')
         }
     }
 }
 
-build.finalizedBy(copyFiles)
-copyFiles.dependsOn(createPom)
+tasks.named('build') {
+    finalizedBy tasks.named('copyFiles')
+}

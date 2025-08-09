@@ -160,7 +160,7 @@ public class LocalBlockVectorSet implements Set<Vector> {
 
     @Override
     public Object[] toArray() {
-        return toArray(null);
+        return toArray((BlockVector[]) null);
     }
 
     @Override

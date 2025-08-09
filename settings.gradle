@@ -1,3 +1,10 @@
-rootProject.name = 'FastAsyncWorldEdit'
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
 
-include 'core', 'bukkit', 'favs', 'sponge112', 'sponge111'//, 'nukkit', 'forge189', 'forge194', 'forge110', 'forge111', 'forge112', 'forge1710'
+rootProject.name = "FastAsyncWorldEdit"
+
+include 'core', 'bukkit'

@@ -11,7 +11,6 @@ import com.boydti.fawe.bukkit.regions.*;
 import com.boydti.fawe.bukkit.util.BukkitReflectionUtils;
 import com.boydti.fawe.bukkit.util.BukkitTaskMan;
 import com.boydti.fawe.bukkit.util.ItemUtil;
-import com.boydti.fawe.bukkit.util.VaultUtil;
 import com.boydti.fawe.bukkit.util.cui.CUIListener;
 import com.boydti.fawe.bukkit.util.cui.StructureCUI;
 import com.boydti.fawe.bukkit.util.image.BukkitImageViewer;
@@ -19,13 +18,7 @@ import com.boydti.fawe.bukkit.v0.BukkitQueue_0;
 import com.boydti.fawe.bukkit.v0.BukkitQueue_All;
 import com.boydti.fawe.bukkit.v0.ChunkListener_8;
 import com.boydti.fawe.bukkit.v0.ChunkListener_9;
-import com.boydti.fawe.bukkit.v1_10.BukkitQueue_1_10;
-import com.boydti.fawe.bukkit.v1_11.BukkitQueue_1_11;
-import com.boydti.fawe.bukkit.v1_12.BukkitQueue_1_12;
-import com.boydti.fawe.bukkit.v1_12.NMSRegistryDumper;
-import com.boydti.fawe.bukkit.v1_7.BukkitQueue17;
 import com.boydti.fawe.bukkit.v1_8.BukkitQueue18R3;
-import com.boydti.fawe.bukkit.v1_9.BukkitQueue_1_9_R1;
 import com.boydti.fawe.config.BBC;
 import com.boydti.fawe.config.Settings;
 import com.boydti.fawe.object.FaweCommand;
@@ -66,7 +59,6 @@ import org.primesoft.blockshub.BlocksHubBukkit;
 public class FaweBukkit implements IFawe, Listener {
 
     private final BukkitMain plugin;
-    private VaultUtil vault;
     private WorldEditPlugin worldedit;
     private ItemUtil itemUtil;
 
@@ -76,10 +68,6 @@ public class FaweBukkit implements IFawe, Listener {
 
     private boolean listeningCui;
     private CUIListener cuiListener;
-
-    public VaultUtil getVault() {
-        return this.vault;
-    }
 
     public WorldEditPlugin getWorldEditPlugin() {
         if (this.worldedit == null) {
@@ -337,11 +325,7 @@ public class FaweBukkit implements IFawe, Listener {
      */
     @Override
     public void setupVault() {
-        try {
-            this.vault = new VaultUtil();
-        } catch (final Throwable e) {
-            this.debug("&dVault is used for persistent `/wea` toggles.");
-        }
+
     }
 
     @Override
@@ -492,66 +476,6 @@ public class FaweBukkit implements IFawe, Listener {
                 MainUtil.handleError(e);
             }
         }
-        final Plugin plotmePlugin = Bukkit.getServer().getPluginManager().getPlugin("PlotMe");
-        if ((plotmePlugin != null) && plotmePlugin.isEnabled()) {
-            try {
-                managers.add(new PlotMeFeature(plotmePlugin, this));
-                Fawe.debug("Plugin 'PlotMe' found. Using it now.");
-            } catch (final Throwable e) {
-                MainUtil.handleError(e);
-            }
-        }
-        final Plugin townyPlugin = Bukkit.getServer().getPluginManager().getPlugin("Towny");
-        if ((townyPlugin != null) && townyPlugin.isEnabled()) {
-            try {
-                managers.add(new TownyFeature(townyPlugin, this));
-                Fawe.debug("Plugin 'Towny' found. Using it now.");
-            } catch (final Throwable e) {
-                MainUtil.handleError(e);
-            }
-        }
-        final Plugin factionsPlugin = Bukkit.getServer().getPluginManager().getPlugin("Factions");
-        if ((factionsPlugin != null) && factionsPlugin.isEnabled()) {
-            try {
-                managers.add(new FactionsFeature(factionsPlugin, this));
-                Fawe.debug("Plugin 'Factions' found. Using it now.");
-            } catch (final Throwable e) {
-                try {
-                    managers.add(new FactionsOneFeature(factionsPlugin, this));
-                    Fawe.debug("Plugin 'FactionsUUID' found. Using it now.");
-                } catch (Throwable e3) {
-                    MainUtil.handleError(e);
-                }
-            }
-        }
-        final Plugin residencePlugin = Bukkit.getServer().getPluginManager().getPlugin("Residence");
-        if ((residencePlugin != null) && residencePlugin.isEnabled()) {
-            try {
-                managers.add(new ResidenceFeature(residencePlugin, this));
-                Fawe.debug("Plugin 'Residence' found. Using it now.");
-            } catch (final Throwable e) {
-                MainUtil.handleError(e);
-            }
-        }
-        final Plugin griefpreventionPlugin = Bukkit.getServer().getPluginManager().getPlugin("GriefPrevention");
-        if ((griefpreventionPlugin != null) && griefpreventionPlugin.isEnabled()) {
-            try {
-                managers.add(new GriefPreventionFeature(griefpreventionPlugin, this));
-                Fawe.debug("Plugin 'GriefPrevention' found. Using it now.");
-            } catch (final Throwable e) {
-                MainUtil.handleError(e);
-            }
-        }
-
-        final Plugin aSkyBlock = Bukkit.getServer().getPluginManager().getPlugin("ASkyBlock");
-        if ((aSkyBlock != null) && aSkyBlock.isEnabled()) {
-            try {
-                managers.add(new ASkyBlockHook(aSkyBlock, this));
-                Fawe.debug("Plugin 'ASkyBlock' found. Using it now.");
-            } catch (final Throwable e) {
-                MainUtil.handleError(e);
-            }
-        }
 
         if (Settings.IMP.EXPERIMENTAL.FREEBUILD) {
             try {
@@ -635,15 +559,6 @@ public class FaweBukkit implements IFawe, Listener {
                 try {
                     BukkitQueue_0.checkVersion(v.name());
                     this.version = tmp = v;
-                    if (tmp == Version.v1_12_R1) {
-                        try {
-                            System.out.println("Running 1.12 registry dumper!");
-                            NMSRegistryDumper dumper = new NMSRegistryDumper(MainUtil.getFile(plugin.getDataFolder(), "extrablocks.json"));
-                            dumper.run();
-                        } catch (Throwable e) {
-                            e.printStackTrace();
-                        }
-                    }
                     break;
                 } catch (IllegalStateException e) {}
             }
@@ -665,18 +580,8 @@ public class FaweBukkit implements IFawe, Listener {
 
     private FaweQueue getQueue(World world) {
         switch (getVersion()) {
-            case v1_7_R4:
-                return new BukkitQueue17(world);
             case v1_8_R3:
                 return new BukkitQueue18R3(world);
-            case v1_9_R2:
-                return new BukkitQueue_1_9_R1(world);
-            case v1_10_R1:
-                return new BukkitQueue_1_10(world);
-            case v1_11_R1:
-                return new BukkitQueue_1_11(world);
-            case v1_12_R1:
-                return new BukkitQueue_1_12(world);
             default:
             case NONE:
                 return new BukkitQueue_All(world);
@@ -685,18 +590,8 @@ public class FaweBukkit implements IFawe, Listener {
 
     private FaweQueue getQueue(String world) {
         switch (getVersion()) {
-            case v1_7_R4:
-                return new BukkitQueue17(world);
             case v1_8_R3:
                 return new BukkitQueue18R3(world);
-            case v1_9_R2:
-                return new BukkitQueue_1_9_R1(world);
-            case v1_10_R1:
-                return new BukkitQueue_1_10(world);
-            case v1_11_R1:
-                return new BukkitQueue_1_11(world);
-            case v1_12_R1:
-                return new BukkitQueue_1_12(world);
             default:
             case NONE:
                 return new BukkitQueue_All(world);

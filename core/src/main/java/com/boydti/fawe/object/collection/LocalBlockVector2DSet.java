@@ -140,7 +140,7 @@ public class LocalBlockVector2DSet implements Set<Vector2D> {
 
     @Override
     public Object[] toArray() {
-        return toArray(null);
+        return toArray((BlockVector2D[]) null);
     }
 
     @Override

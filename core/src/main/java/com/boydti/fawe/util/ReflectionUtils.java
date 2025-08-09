@@ -9,9 +9,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-import sun.reflect.ConstructorAccessor;
-import sun.reflect.FieldAccessor;
-import sun.reflect.ReflectionFactory;
+import sun.misc.Unsafe;
 
 /**
  * @author DPOH-VAR
@@ -99,48 +97,86 @@ public class ReflectionUtils {
         }
     }
 
-    private static Object makeEnum(Class<?> enumClass, String value, int ordinal,
-                                   Class<?>[] additionalTypes, Object[] additionalValues) throws Exception {
-        Object[] parms = new Object[additionalValues.length + 2];
-        parms[0] = value;
-        parms[1] = Integer.valueOf(ordinal);
-        System.arraycopy(additionalValues, 0, parms, 2, additionalValues.length);
-        return enumClass.cast(getConstructorAccessor(enumClass, additionalTypes).newInstance(parms));
+    private static final Unsafe UNSAFE;
+    static {
+        try {
+            Field f = Unsafe.class.getDeclaredField("theUnsafe");
+            f.setAccessible(true);
+            UNSAFE = (Unsafe) f.get(null);
+        } catch (Exception e) {
+            throw new RuntimeException("No se pudo obtener Unsafe", e);
+        }
     }
 
-    private static ConstructorAccessor getConstructorAccessor(Class<?> enumClass,
-                                                              Class<?>[] additionalParameterTypes) throws NoSuchMethodException {
-        Class<?>[] parameterTypes = new Class[additionalParameterTypes.length + 2];
-        parameterTypes[0] = String.class;
-        parameterTypes[1] = int.class;
-        System.arraycopy(additionalParameterTypes, 0,
-                parameterTypes, 2, additionalParameterTypes.length);
-        return ReflectionFactory.getReflectionFactory().newConstructorAccessor(enumClass.getDeclaredConstructor(parameterTypes));
+    private static Object makeEnum(Class<?> enumClass, String value, int ordinal,
+                                   Class<?>[] additionalTypes, Object[] additionalValues) throws Exception {
+        // 1) Crear instancia cruda del enum (sin constructor)
+        Object newEnum = UNSAFE.allocateInstance(enumClass);
+
+        // 2) Setear 'name' y 'ordinal' heredados de java.lang.Enum
+        Field nameField = Enum.class.getDeclaredField("name");
+        nameField.setAccessible(true);
+        long nameOffset = UNSAFE.objectFieldOffset(nameField);
+        UNSAFE.putObject(newEnum, nameOffset, value);
+
+        Field ordinalField = Enum.class.getDeclaredField("ordinal");
+        ordinalField.setAccessible(true);
+        long ordinalOffset = UNSAFE.objectFieldOffset(ordinalField);
+        UNSAFE.putInt(newEnum, ordinalOffset, ordinal);
+
+        // 3) Si tu enum tiene campos extra, setéalos en orden de declaración
+        //    según additionalTypes/additionalValues
+        if (additionalTypes != null && additionalValues != null && additionalTypes.length == additionalValues.length) {
+            // Recorremos los fields declarados del enum y vamos asignando los que NO son estáticos
+            Field[] declared = enumClass.getDeclaredFields();
+            int extraIdx = 0;
+            for (Field f : declared) {
+                int mods = f.getModifiers();
+                if (Modifier.isStatic(mods)) continue; // saltar CONSTANTES y $VALUES
+                if (f.getDeclaringClass() == Enum.class) continue; // ya seteamos name/ordinal
+                if (extraIdx >= additionalValues.length) break;
+
+                // Match tipo esperado
+                if (!f.getType().isAssignableFrom(additionalTypes[extraIdx])) continue;
+
+                f.setAccessible(true);
+                long off = UNSAFE.objectFieldOffset(f);
+                Object val = additionalValues[extraIdx++];
+                // asignación (soporta primitivos y objetos)
+                if (f.getType().isPrimitive()) {
+                    if (f.getType() == int.class) UNSAFE.putInt(newEnum, off, (int) val);
+                    else if (f.getType() == long.class) UNSAFE.putLong(newEnum, off, (long) val);
+                    else if (f.getType() == boolean.class) UNSAFE.putBoolean(newEnum, off, (boolean) val);
+                    else if (f.getType() == byte.class) UNSAFE.putByte(newEnum, off, (byte) val);
+                    else if (f.getType() == short.class) UNSAFE.putShort(newEnum, off, (short) val);
+                    else if (f.getType() == char.class) UNSAFE.putChar(newEnum, off, (char) val);
+                    else if (f.getType() == float.class) UNSAFE.putFloat(newEnum, off, (float) val);
+                    else if (f.getType() == double.class) UNSAFE.putDouble(newEnum, off, (double) val);
+                    else throw new IllegalStateException("Primitivo no soportado: " + f.getType());
+                } else {
+                    UNSAFE.putObject(newEnum, off, val);
+                }
+            }
+        }
+
+        return enumClass.cast(newEnum);
     }
 
     public static void setFailsafeFieldValue(Field field, Object target, Object value)
             throws NoSuchFieldException, IllegalAccessException {
-
-        // let's make the field accessible
         field.setAccessible(true);
 
-        // next we change the modifier in the Field instance to
-        // not be final anymore, thus tricking reflection into
-        // letting us modify the static final field
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        int modifiers = modifiersField.getInt(field);
-
-        // blank out the final bit in the modifiers int
-        modifiers &= ~Modifier.FINAL;
-        modifiersField.setInt(field, modifiers);
-
+        // Quitar el flag FINAL si existe
         try {
-            FieldAccessor fa = ReflectionFactory.getReflectionFactory().newFieldAccessor(field, false);
-            fa.set(target, value);
-        } catch (NoSuchMethodError error) {
-            field.set(target, value);
+            Field modifiersField = Field.class.getDeclaredField("modifiers");
+            modifiersField.setAccessible(true);
+            modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+        } catch (NoSuchFieldException ignored) {
+            // En Java 17 puede no estar o no hacer falta
         }
+
+        // Asignar valor normal
+        field.set(target, value);
     }
 
     private static void blankField(Class<?> enumClass, String fieldName)
