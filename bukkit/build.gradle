@@ -13,7 +13,7 @@ dependencies {
 
     compileOnly 'net.minemora.moraspigot:moraspigot:1.8.8-R0.1-SNAPSHOT'
 
-    compileOnly 'com.comphenix.protocol:ProtocolLib-API:4.4.0'
+    compileOnly 'com.github.azbh111:ProtocolLib:4.4.0'
     compileOnly('org.inventivetalent:mapmanager:1.7.2-SNAPSHOT') { transitive = false }
 
     implementation 'com.github.luben:zstd-jni:1.1.1'
