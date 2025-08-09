@@ -77,6 +77,13 @@ tasks.register('copyFiles') {
     }
 }
 
+tasks.processResources {
+    filteringCharset = 'UTF-8'
+    filesMatching('fawe.properties') {
+        expand(version: rootProject.version)
+    }
+}
+
 tasks.named('build') {
     finalizedBy tasks.named('copyFiles')
 }

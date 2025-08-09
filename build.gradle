@@ -6,36 +6,10 @@ plugins {
 
 group = "com.boydti.fawe"
 description = "FastAsyncWorldEdit"
+version= "25.08.09-0-0-0.0.1"
 
 tasks.register("setupCIWorkspace") { /* stub */ }
 tasks.named("clean") { doLast { delete("target") } }
-
-def gitCmd = { List<String> args ->
-    def proc = (["git"] + args).execute(null, rootDir)
-    proc.consumeProcessOutputStream(System.out)
-    proc.consumeProcessErrorStream(System.err)
-    proc.waitFor()
-    if (proc.exitValue() != 0) {
-        throw new GradleException("Fallo ejecutando: git ${args.join(' ')} (código ${proc.exitValue()})")
-    }
-    return proc.in.text.trim()
-}
-
-def computeVersion = {
-    try {
-        def date = gitCmd(["show", "-s", "--format=%cd", "--date=format:%y.%m.%d", "HEAD"])
-        def abbrev = gitCmd(["rev-parse", "--short", "HEAD"])
-        def count = gitCmd(["rev-list", "--count", "HEAD"]).toInteger()
-        def adjusted = count - 67
-        adjusted = adjusted < 0 ? 0 : adjusted
-
-        return "${date}-${abbrev}-${adjusted}"
-    } catch (Throwable ignore) {
-        return "unknown"
-    }
-}
-
-version = project.hasProperty("lzNoVersion") ? "unknown" : computeVersion()
 
 allprojects {
     configurations.all {

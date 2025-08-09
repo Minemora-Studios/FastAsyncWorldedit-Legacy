@@ -106,3 +106,13 @@ tasks.register('copyFiles') {
         }
     }
 }
+
+tasks.processResources {
+    filteringCharset = 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand(
+                version: rootProject.version
+        )
+    }
+}
+
