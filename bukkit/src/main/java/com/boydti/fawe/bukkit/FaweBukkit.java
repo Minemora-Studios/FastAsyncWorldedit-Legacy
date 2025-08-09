@@ -11,8 +11,6 @@ import com.boydti.fawe.bukkit.regions.*;
 import com.boydti.fawe.bukkit.util.BukkitReflectionUtils;
 import com.boydti.fawe.bukkit.util.BukkitTaskMan;
 import com.boydti.fawe.bukkit.util.ItemUtil;
-import com.boydti.fawe.bukkit.util.cui.CUIListener;
-import com.boydti.fawe.bukkit.util.cui.StructureCUI;
 import com.boydti.fawe.bukkit.util.image.BukkitImageViewer;
 import com.boydti.fawe.bukkit.v0.BukkitQueue_0;
 import com.boydti.fawe.bukkit.v0.BukkitQueue_All;
@@ -67,7 +65,6 @@ public class FaweBukkit implements IFawe, Listener {
     private CFIPacketListener packetListener;
 
     private boolean listeningCui;
-    private CUIListener cuiListener;
 
     public WorldEditPlugin getWorldEditPlugin() {
         if (this.worldedit == null) {
@@ -141,19 +138,6 @@ public class FaweBukkit implements IFawe, Listener {
 
     @Override
     public CUI getCUI(FawePlayer player) {
-        if (Settings.IMP.EXPERIMENTAL.VANILLA_CUI) {
-            if (listeningCui && cuiListener == null) return null;
-            listeningCui = true;
-            if (cuiListener == null) {
-                Plugin protocolLib = Bukkit.getPluginManager().getPlugin("ProtocolLib");
-                if (protocolLib != null && protocolLib.isEnabled()) {
-                    cuiListener = new CUIListener(plugin);
-                } else {
-                    return null;
-                }
-            }
-            return new StructureCUI(player);
-        }
         return null;
     }
 
@@ -466,16 +450,7 @@ public class FaweBukkit implements IFawe, Listener {
      */
     @Override
     public Collection<FaweMaskManager> getMaskManagers() {
-        final Plugin worldguardPlugin = Bukkit.getServer().getPluginManager().getPlugin("WorldGuard");
         final ArrayList<FaweMaskManager> managers = new ArrayList<>();
-        if ((worldguardPlugin != null) && worldguardPlugin.isEnabled()) {
-            try {
-                managers.add(new Worldguard(worldguardPlugin, this));
-                Fawe.debug("Plugin 'WorldGuard' found. Using it now.");
-            } catch (final Throwable e) {
-                MainUtil.handleError(e);
-            }
-        }
 
         if (Settings.IMP.EXPERIMENTAL.FREEBUILD) {
             try {
@@ -567,14 +542,7 @@ public class FaweBukkit implements IFawe, Listener {
     }
 
     public enum Version {
-        v1_7_R4,
         v1_8_R3,
-        v1_9_R2,
-        v1_10_R1,
-        v1_11_R1,
-        v1_12_R1,
-        v1_12_R2,
-        v1_13_R1,
         NONE,
     }
 

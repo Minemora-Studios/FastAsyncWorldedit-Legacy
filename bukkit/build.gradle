@@ -11,8 +11,6 @@ repositories {
 dependencies {
     implementation project(':core')
 
-    compileOnly 'com.sk89q:worldguard:6.0.0-SNAPSHOT'
-
     compileOnly 'net.minemora.moraspigot:moraspigot:1.8.8-R0.1-SNAPSHOT'
 
     compileOnly 'com.comphenix.protocol:ProtocolLib-API:4.4.0'

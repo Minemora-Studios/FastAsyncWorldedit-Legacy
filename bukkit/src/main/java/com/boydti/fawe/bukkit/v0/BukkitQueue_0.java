@@ -5,23 +5,15 @@ import com.boydti.fawe.FaweCache;
 import com.boydti.fawe.bukkit.BukkitPlayer;
 import com.boydti.fawe.bukkit.FaweBukkit;
 import com.boydti.fawe.bukkit.util.BukkitReflectionUtils;
-import com.boydti.fawe.bukkit.v1_12.packet.FaweChunkPacket;
-import com.boydti.fawe.bukkit.v1_12.packet.MCAChunkPacket;
 import com.boydti.fawe.example.CharFaweChunk;
 import com.boydti.fawe.example.NMSMappedFaweQueue;
-import com.boydti.fawe.jnbt.anvil.MCAChunk;
 import com.boydti.fawe.object.FaweChunk;
 import com.boydti.fawe.object.FawePlayer;
 import com.boydti.fawe.object.RunnableVal;
-import com.boydti.fawe.object.queue.LazyFaweChunk;
 import com.boydti.fawe.object.visitor.FaweChunkVisitor;
 import com.boydti.fawe.util.MathMan;
 import com.boydti.fawe.util.ReflectionUtils;
 import com.boydti.fawe.util.TaskManager;
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.injector.netty.WirePacket;
 import com.sk89q.jnbt.Tag;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
@@ -109,71 +101,11 @@ public abstract class BukkitQueue_0<CHUNK, CHUNKSECTIONS, SECTION> extends NMSMa
 
     @Override
     public void sendChunkUpdate(FaweChunk chunk, FawePlayer... players) {
-        if (supports(Capability.CHUNK_PACKETS)) {
-            sendChunkUpdatePLIB(chunk, players);
-        } else {
             sendBlockUpdate(chunk, players);
-        }
-    }
-
-    public void sendChunkUpdatePLIB(FaweChunk chunk, FawePlayer... players) {
-        ProtocolManager manager = ProtocolLibrary.getProtocolManager();
-        WirePacket packet = null;
-        int viewDistance = Bukkit.getViewDistance();
-        try {
-            for (int i = 0; i < players.length; i++) {
-                int cx = chunk.getX();
-                int cz = chunk.getZ();
-
-                Player player = ((BukkitPlayer) players[i]).parent;
-                Location loc = player.getLocation();
-
-                if (Math.abs((loc.getBlockX() >> 4) - cx) <= viewDistance && Math.abs((loc.getBlockZ() >> 4) - cz) <= viewDistance) {
-                    if (packet == null) {
-                        byte[] data;
-                        byte[] buffer = new byte[8192];
-                        if (chunk instanceof LazyFaweChunk) {
-                            chunk = (FaweChunk) chunk.getChunk();
-                        }
-                        if (chunk instanceof MCAChunk) {
-                            data = new MCAChunkPacket((MCAChunk) chunk, true, true, hasSky()).apply(buffer);
-                        } else {
-                            data = new FaweChunkPacket(chunk, true, true, hasSky()).apply(buffer);
-                        }
-                        packet = new WirePacket(PacketType.Play.Server.MAP_CHUNK, data);
-                    }
-                    manager.sendWirePacket(player, packet);
-                }
-            }
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override
     public boolean queueChunkLoad(int cx, int cz, RunnableVal<CHUNK> operation) {
-        if (PAPER) {
-            try {
-                new PaperChunkCallback(getImpWorld(), cx, cz) {
-                    @Override
-                    public void onLoad(Chunk bukkitChunk) {
-                        try {
-                            CHUNK chunk = (CHUNK) methodGetHandle.invoke(bukkitChunk);
-                            try {
-                                operation.run(chunk);
-                            } catch (Throwable e) {
-                                e.printStackTrace();
-                            }
-                        } catch (Throwable e) {
-                            PAPER = false;
-                        }
-                    }
-                };
-                return true;
-            } catch (Throwable ignore) {
-                PAPER = false;
-            }
-        }
         return super.queueChunkLoad(cx, cz);
     }
 

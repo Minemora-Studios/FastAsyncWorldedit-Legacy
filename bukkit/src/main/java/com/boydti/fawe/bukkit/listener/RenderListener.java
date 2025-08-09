@@ -96,7 +96,8 @@ public class RenderListener implements Listener {
                 }
             }
         }
-        player.setViewDistance(value);
+        //morafawe
+        //player.setViewDistance(value);
     }
 
     public int getViewDistance(Player player) {

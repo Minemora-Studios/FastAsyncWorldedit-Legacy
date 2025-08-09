@@ -630,9 +630,10 @@ public class Vector2D implements Serializable {
 
     @Override
     public int hashCode() {
-        return ((new Double(getX())).hashCode() >> 13) ^
-                (new Double(getZ())).hashCode();
+        return (Double.hashCode(getX()) >> 13) ^
+                Double.hashCode(getZ());
     }
+
 
     @Override
     public String toString() {

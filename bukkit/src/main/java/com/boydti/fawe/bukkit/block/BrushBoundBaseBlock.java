@@ -100,7 +100,7 @@ public class BrushBoundBaseBlock extends BaseBlock implements BrushHolder {
         Map<String, Tag> displayMap;
         if (tool != null) {
             String json = tool.toString(gson);
-            map.put("weBrushJson", new StringTag("weBrushJson", json));
+            map.put("weBrushJson", new StringTag(json));
             if (display == null) {
                 map.put("display", new CompoundTag(displayMap = new HashMap()));
             } else {
@@ -113,7 +113,7 @@ public class BrushBoundBaseBlock extends BaseBlock implements BrushHolder {
             if (secondary == null) secondary = primary;
             if (primary != null) {
                 String name = primary == secondary ? primary.split(" ")[0] : primary.split(" ")[0] + " / " + secondary.split(" ")[0];
-                displayMap.put("Name", new StringTag("Name", name));
+                displayMap.put("Name", new StringTag(name));
             }
         } else if (map.containsKey("weBrushJson")) {
             map.remove("weBrushJson");

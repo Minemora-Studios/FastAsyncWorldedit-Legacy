@@ -142,6 +142,16 @@ public class AsyncBlock implements Block {
     }
 
     @Override
+    public void setTypeFast(Material material) {
+
+    }
+
+    @Override
+    public void setTypeFastAndIgnoreLightning(Material material) {
+
+    }
+
+    @Override
     public boolean setTypeId(int type) {
         return setTypeIdAndData(type, (byte) 0, true);
     }
